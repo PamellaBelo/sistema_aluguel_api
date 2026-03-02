@@ -1,6 +1,7 @@
 package com.pamella.sistema_aluguel_api.config;
 
 import com.pamella.sistema_aluguel_api.security.JwtAuthFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,13 +25,14 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(org.springframework.security.config.annotation.web.builders.HttpSecurity http) throws Exception {
+
         http
-                .cors(cors -> {}) // 👈 ATIVA CORS
+                .cors(cors -> {}) // habilita CORS
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/teste/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/auth/**", "/teste/**").permitAll() // liberado sem token
+                        .anyRequest().authenticated() // todos os outros exigem autenticação
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -40,31 +42,28 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 👇 CONFIGURAÇÃO CORS
+    // Configuração de CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:4200"
-
-        ));
-        configuration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"
-        ));
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource() {
+            @Override
+            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                return configuration;
+            }
+        };
 
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 
@@ -23,6 +24,9 @@ public class UsuarioDetailsService implements UserDetailsService {
         Usuario usuario = repository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
-        return new User(usuario.getEmail(), usuario.getSenha(), new ArrayList<>());
+        return new User(usuario.getEmail(), usuario.getSenha(),
+                //new ArrayList<>()
+                List.of(() -> "ROLE_USER")
+        );
     }
 }

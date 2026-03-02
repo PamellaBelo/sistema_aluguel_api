@@ -4,21 +4,21 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "unidades")
+@Table(name = "casas")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Unidade {
+public class Casa {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nome;
+    private String numero;
 
     @ManyToOne
-    @JoinColumn(name = "usuario_id", nullable = false)
-    private Usuario usuario;
+    @JoinColumn(name = "unidade_id", nullable = false)
+    private Unidade unidade;
 }
