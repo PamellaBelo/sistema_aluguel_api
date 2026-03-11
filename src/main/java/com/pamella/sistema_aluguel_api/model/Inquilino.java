@@ -1,19 +1,26 @@
 package com.pamella.sistema_aluguel_api.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Setter
-@Getter
+@Table(name = "inquilinos")
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Inquilino {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String nome;
+
+    // ✅ Campos extras úteis para um sistema de aluguel
+    private String cpf;
+    private String telefone;
+    private String email;
 }
+

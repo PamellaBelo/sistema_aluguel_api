@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface UnidadeRepository extends JpaRepository<Unidade, Long> {
     List<Unidade> findByUsuarioId(Long usuarioId);
+    long countByUsuarioId(Long usuarioId);
 }

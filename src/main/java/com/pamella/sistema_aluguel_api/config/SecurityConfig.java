@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .cors(cors -> {}) // habilita CORS
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/teste/**").permitAll() // liberado sem token
+                        .requestMatchers("/auth/**", "/teste/**", "/dashboard/**").permitAll() // liberado sem token
                         .anyRequest().authenticated() // todos os outros exigem autenticação
                 )
                 .sessionManagement(session ->

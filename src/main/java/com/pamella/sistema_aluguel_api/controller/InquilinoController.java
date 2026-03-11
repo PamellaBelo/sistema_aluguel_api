@@ -1,37 +1,47 @@
 package com.pamella.sistema_aluguel_api.controller;
 
-import com.pamella.sistema_aluguel_api.model.Inquilino;
+import com.pamella.sistema_aluguel_api.dto.InquilinoRequest;
+import com.pamella.sistema_aluguel_api.dto.InquilinoResponse;
 import com.pamella.sistema_aluguel_api.service.InquilinoService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/inquilinos")
+@RequiredArgsConstructor
 public class InquilinoController {
 
-    @Autowired
-    private InquilinoService inquilinoService;
+    private final InquilinoService service;
+
+    @PostMapping
+    public ResponseEntity<InquilinoResponse> criar(@Valid @RequestBody InquilinoRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.criar(request));
+    }
 
     @GetMapping
-    public List<Inquilino> getAll() {
-        return inquilinoService.getAll();
+    public ResponseEntity<List<InquilinoResponse>> listar() {
+        return ResponseEntity.ok(service.listar());
     }
 
     @GetMapping("/{id}")
-    public Optional<Inquilino> getById(@PathVariable Long id) {
-        return inquilinoService.getById(id);
+    public ResponseEntity<InquilinoResponse> buscar(@PathVariable Long id) {
+        return ResponseEntity.ok(service.buscarPorId(id));
     }
 
-    @PostMapping
-    public Inquilino create(@RequestBody Inquilino inquilino) {
-        return inquilinoService.create(inquilino);
+    @PutMapping("/{id}")
+    public ResponseEntity<InquilinoResponse> atualizar(@PathVariable Long id,
+                                                       @Valid @RequestBody InquilinoRequest request) {
+        return ResponseEntity.ok(service.atualizar(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        inquilinoService.delete(id);
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        service.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 }

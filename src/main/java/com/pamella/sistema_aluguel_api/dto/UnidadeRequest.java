@@ -1,3 +1,5 @@
 package com.pamella.sistema_aluguel_api.dto;
 
-public record UnidadeRequest(String nome) { }
+import jakarta.validation.constraints.NotBlank;
+
+public record UnidadeRequest(@NotBlank String nome) {}

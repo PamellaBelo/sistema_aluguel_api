@@ -6,10 +6,8 @@ import lombok.*;
 
 @Entity
 @Table(name = "usuarios")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 public class Usuario {
 
@@ -17,6 +15,7 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String nome;
 
     @Column(unique = true, nullable = false)
@@ -24,6 +23,4 @@ public class Usuario {
 
     @Column(nullable = false)
     private String senha;
-
-
-     }
+}
