@@ -4,10 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "unidades")
+@Table(name = "imoveis")
 @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor
-public class Unidade {
+public class Imovel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,12 +16,11 @@ public class Unidade {
     @Column(nullable = false)
     private String nome;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private StatusUnidade status = StatusUnidade.VAGA;
+    @Column
+    private String endereco;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "imovel_id", nullable = false)
-    private Imovel imovel;
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
 }
+

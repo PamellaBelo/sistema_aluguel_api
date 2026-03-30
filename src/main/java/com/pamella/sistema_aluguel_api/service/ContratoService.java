@@ -3,18 +3,12 @@ package com.pamella.sistema_aluguel_api.service;
 import com.pamella.sistema_aluguel_api.dto.ContratoRequest;
 import com.pamella.sistema_aluguel_api.dto.ContratoResponse;
 import com.pamella.sistema_aluguel_api.model.*;
-import com.pamella.sistema_aluguel_api.repository.CasaRepository;
-import com.pamella.sistema_aluguel_api.repository.ContaRepository;
-import com.pamella.sistema_aluguel_api.repository.ContratoRepository;
-import com.pamella.sistema_aluguel_api.repository.InquilinoRepository;
+import com.pamella.sistema_aluguel_api.repository.*;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -22,25 +16,25 @@ import java.util.List;
 public class ContratoService {
 
     private final ContratoRepository contratoRepository;
-    private final CasaRepository casaRepository;
+    private final UnidadeRepository unidadeRepository;
     private final InquilinoRepository inquilinoRepository;
     private final ContaRepository contaRepository;
 
-    @Transactional
     public ContratoResponse criar(ContratoRequest request) {
-        // ✅ Regra de negócio: casa só pode ter 1 contrato ativo
-        if (contratoRepository.existsByCasaIdAndAtivoTrue(request.casaId())) {
-            throw new IllegalStateException("Esta casa já possui um contrato ativo");
+        Unidade unidade = unidadeRepository.findById(request.unidadeId())
+                .orElseThrow(() -> new EntityNotFoundException("Unidade não encontrada."));
+        Inquilino inquilino = inquilinoRepository.findById(request.inquilinoId())
+                .orElseThrow(() -> new EntityNotFoundException("Inquilino não encontrado."));
+
+        if (contratoRepository.existsByUnidadeIdAndAtivoTrue(request.unidadeId())) {
+            throw new IllegalStateException("Esta unidade já possui um contrato ativo.");
+        }
+        if (contratoRepository.existsByInquilinoIdAndAtivoTrue(request.inquilinoId())) {
+            throw new IllegalStateException("Este inquilino já possui um contrato ativo.");
         }
 
-        Casa casa = casaRepository.findById(request.casaId())
-                .orElseThrow(() -> new EntityNotFoundException("Casa não encontrada"));
-
-        Inquilino inquilino = inquilinoRepository.findById(request.inquilinoId())
-                .orElseThrow(() -> new EntityNotFoundException("Inquilino não encontrado"));
-
         Contrato contrato = Contrato.builder()
-                .casa(casa)
+                .unidade(unidade)
                 .inquilino(inquilino)
                 .valorAluguel(request.valorAluguel())
                 .dataInicio(request.dataInicio())
@@ -48,13 +42,10 @@ public class ContratoService {
                 .ativo(true)
                 .build();
 
-        contratoRepository.save(contrato);
+        unidade.setStatus(StatusUnidade.ALUGADA);
+        unidadeRepository.save(unidade);
 
-        // ✅ Atualiza status da casa para ALUGADA automaticamente
-        casa.setStatus(StatusCasa.ALUGADA);
-        casaRepository.save(casa);
-
-        return toResponse(contrato);
+        return toResponse(contratoRepository.save(contrato));
     }
 
     public List<ContratoResponse> listar() {
@@ -62,51 +53,38 @@ public class ContratoService {
     }
 
     public ContratoResponse buscarPorId(Long id) {
-        return toResponse(buscar(id));
+        return toResponse(contratoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Contrato não encontrado.")));
     }
 
-    @Transactional
     public ContratoResponse encerrar(Long id) {
-        Contrato contrato = buscar(id);
-
+        Contrato contrato = contratoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Contrato não encontrado."));
         if (!contrato.isAtivo()) {
-            throw new IllegalStateException("Contrato já está encerrado");
+            throw new IllegalStateException("Este contrato já está encerrado.");
         }
-
         contrato.setAtivo(false);
-        contrato.setDataFim(LocalDate.now());
-        contratoRepository.save(contrato);
-
-        // ✅ Libera a casa ao encerrar o contrato
-        Casa casa = contrato.getCasa();
-        casa.setStatus(StatusCasa.VAGA);
-        casaRepository.save(casa);
-
-        return toResponse(contrato);
+        contrato.getUnidade().setStatus(StatusUnidade.VAGA);
+        unidadeRepository.save(contrato.getUnidade());
+        return toResponse(contratoRepository.save(contrato));
     }
 
-    // ✅ Cálculo correto: aluguel + todas as contas do contrato
-    public BigDecimal calcularTotalMensal(Long contratoId) {
-        Contrato contrato = buscar(contratoId);
-
-        BigDecimal totalContas = contaRepository.findByContratoId(contratoId)
+    public BigDecimal calcularTotalMensal(Long id) {
+        Contrato contrato = contratoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Contrato não encontrado."));
+        BigDecimal totalContas = contaRepository.findByContratoId(id)
                 .stream()
-                .map(Conta::getValor)
+                .map(c -> c.getValor())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
         return contrato.getValorAluguel().add(totalContas);
-    }
-
-    private Contrato buscar(Long id) {
-        return contratoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Contrato não encontrado"));
     }
 
     private ContratoResponse toResponse(Contrato c) {
         return new ContratoResponse(
                 c.getId(),
-                c.getCasa().getId(),
-                c.getCasa().getNumero(),
+                c.getUnidade().getId(),
+                c.getUnidade().getNome(),
+                c.getUnidade().getImovel().getNome(),
                 c.getInquilino().getId(),
                 c.getInquilino().getNome(),
                 c.getValorAluguel(),

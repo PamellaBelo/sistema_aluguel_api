@@ -18,6 +18,6 @@ public class DashboardController {
 
     @GetMapping
     public ResponseEntity<DashboardResponse> getDashboard() {
-        return ResponseEntity.ok(service.obterDadosDashboard());
+        return ResponseEntity.ok(service.getDashboard());
     }
 }

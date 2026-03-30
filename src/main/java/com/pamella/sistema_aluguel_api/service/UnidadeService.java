@@ -1,13 +1,15 @@
 package com.pamella.sistema_aluguel_api.service;
+
 import com.pamella.sistema_aluguel_api.dto.UnidadeRequest;
 import com.pamella.sistema_aluguel_api.dto.UnidadeResponse;
+import com.pamella.sistema_aluguel_api.model.Imovel;
+import com.pamella.sistema_aluguel_api.model.StatusUnidade;
 import com.pamella.sistema_aluguel_api.model.Unidade;
-import com.pamella.sistema_aluguel_api.model.Usuario;
+import com.pamella.sistema_aluguel_api.repository.ContratoRepository;
+import com.pamella.sistema_aluguel_api.repository.ImovelRepository;
 import com.pamella.sistema_aluguel_api.repository.UnidadeRepository;
-import com.pamella.sistema_aluguel_api.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,42 +18,62 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UnidadeService {
 
-    private final UnidadeRepository repository;
-    private final UsuarioRepository usuarioRepository;
+    private final UnidadeRepository unidadeRepository;
+    private final ImovelRepository imovelRepository;
+    private final ContratoRepository contratoRepository;
 
     public UnidadeResponse criar(UnidadeRequest request) {
-        Usuario usuario = getUsuarioLogado();
+        Imovel imovel = imovelRepository.findById(request.imovelId())
+                .orElseThrow(() -> new EntityNotFoundException("Imóvel não encontrado."));
 
         Unidade unidade = Unidade.builder()
                 .nome(request.nome())
-                .usuario(usuario)
+                .imovel(imovel)
+                .status(request.status() != null ? request.status() : StatusUnidade.VAGA)
                 .build();
 
-        repository.save(unidade);
-        return toResponse(unidade);
+        return toResponse(unidadeRepository.save(unidade));
     }
 
     public List<UnidadeResponse> listar() {
-        Usuario usuario = getUsuarioLogado();
-        return repository.findByUsuarioId(usuario.getId())
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return unidadeRepository.findAll().stream().map(this::toResponse).toList();
+    }
+
+    public List<UnidadeResponse> listarPorImovel(Long imovelId) {
+        return unidadeRepository.findByImovelId(imovelId).stream().map(this::toResponse).toList();
+    }
+
+    public List<UnidadeResponse> listarPorStatus(StatusUnidade status) {
+        return unidadeRepository.findByStatus(status).stream().map(this::toResponse).toList();
+    }
+
+    public UnidadeResponse atualizar(Long id, UnidadeRequest request) {
+        Unidade unidade = unidadeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Unidade não encontrada."));
+        Imovel imovel = imovelRepository.findById(request.imovelId())
+                .orElseThrow(() -> new EntityNotFoundException("Imóvel não encontrado."));
+        unidade.setNome(request.nome());
+        unidade.setImovel(imovel);
+        if (request.status() != null) unidade.setStatus(request.status());
+        return toResponse(unidadeRepository.save(unidade));
     }
 
     public void deletar(Long id) {
-        Unidade unidade = repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Unidade não encontrada"));
-        repository.delete(unidade);
-    }
-
-    private Usuario getUsuarioLogado() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+        Unidade unidade = unidadeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Unidade não encontrada."));
+        if (contratoRepository.existsByUnidadeIdAndAtivoTrue(id)) {
+            throw new IllegalStateException("Esta unidade possui contrato ativo e não pode ser excluída.");
+        }
+        unidadeRepository.delete(unidade);
     }
 
     private UnidadeResponse toResponse(Unidade u) {
-        return new UnidadeResponse(u.getId(), u.getNome());
+        return new UnidadeResponse(
+                u.getId(),
+                u.getNome(),
+                u.getImovel().getId(),
+                u.getImovel().getNome(),
+                u.getStatus()
+        );
     }
 }

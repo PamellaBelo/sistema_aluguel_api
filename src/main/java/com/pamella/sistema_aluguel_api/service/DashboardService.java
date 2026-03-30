@@ -1,49 +1,50 @@
 package com.pamella.sistema_aluguel_api.service;
 
 import com.pamella.sistema_aluguel_api.dto.DashboardResponse;
-import com.pamella.sistema_aluguel_api.model.StatusCasa;
+import com.pamella.sistema_aluguel_api.model.StatusUnidade;
+import com.pamella.sistema_aluguel_api.model.Usuario;
 import com.pamella.sistema_aluguel_api.repository.*;
-import lombok.Getter;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
 
+    private final ImovelRepository imovelRepository;
     private final UnidadeRepository unidadeRepository;
-    private final CasaRepository casaRepository;
     private final ContratoRepository contratoRepository;
     private final ContaRepository contaRepository;
     private final UsuarioRepository usuarioRepository;
 
-    public DashboardResponse obterDadosDashboard() {
-
+    public DashboardResponse getDashboard() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Long usuarioId = usuarioRepository.findByEmail(email)
-                .orElseThrow().getId();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado."));
 
-        long totalUnidades = unidadeRepository.countByUsuarioId(usuarioId);
+        long totalImoveis = imovelRepository.countByUsuarioId(usuario.getId());
 
-        long casasAlugadas = casaRepository.countByStatus(StatusCasa.ALUGADA);
-        long casasVagas = casaRepository.countByStatus(StatusCasa.VAGA);
+        long totalUnidades = imovelRepository.findByUsuarioId(usuario.getId())
+                .stream()
+                .mapToLong(imovel -> unidadeRepository.countByImovelId(imovel.getId()))
+                .sum();
 
-        BigDecimal valorTotalReceber = contratoRepository.somarValorAluguelAtivos();
-
-        long contasPendentes = contaRepository.countContasVencidas(LocalDate.now());
+        long unidadesAlugadas = unidadeRepository.countByStatus(StatusUnidade.ALUGADA);
+        long unidadesVagas    = unidadeRepository.countByStatus(StatusUnidade.VAGA);
+        var  valorTotal       = contratoRepository.somarValorAluguelAtivos();
+        long contasVencidas   = contaRepository.countContasVencidas(LocalDate.now());
 
         return new DashboardResponse(
+                totalImoveis,
                 totalUnidades,
-                casasAlugadas,
-                casasVagas,
-                valorTotalReceber,
-                contasPendentes
+                unidadesAlugadas,
+                unidadesVagas,
+                valorTotal,
+                contasVencidas
         );
     }
 }

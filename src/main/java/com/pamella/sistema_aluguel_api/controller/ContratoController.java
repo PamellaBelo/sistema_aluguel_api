@@ -5,8 +5,6 @@ import com.pamella.sistema_aluguel_api.dto.ContratoResponse;
 import com.pamella.sistema_aluguel_api.service.ContratoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,31 +16,30 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ContratoController {
 
-    private final ContratoService service;
+    private final ContratoService contratoService;
 
     @PostMapping
-    public ResponseEntity<ContratoResponse> criar(@Valid @RequestBody ContratoRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.criar(request));
+    public ResponseEntity<ContratoResponse> criar(@RequestBody @Valid ContratoRequest request) {
+        return ResponseEntity.ok(contratoService.criar(request));
     }
 
     @GetMapping
     public ResponseEntity<List<ContratoResponse>> listar() {
-        return ResponseEntity.ok(service.listar());
+        return ResponseEntity.ok(contratoService.listar());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ContratoResponse> buscar(@PathVariable Long id) {
-        return ResponseEntity.ok(service.buscarPorId(id));
+    public ResponseEntity<ContratoResponse> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(contratoService.buscarPorId(id));
     }
 
-    // ✅ Encerrar contrato (PUT, não DELETE — o contrato fica no histórico)
     @PutMapping("/{id}/encerrar")
     public ResponseEntity<ContratoResponse> encerrar(@PathVariable Long id) {
-        return ResponseEntity.ok(service.encerrar(id));
+        return ResponseEntity.ok(contratoService.encerrar(id));
     }
 
     @GetMapping("/{id}/total-mensal")
     public ResponseEntity<BigDecimal> totalMensal(@PathVariable Long id) {
-        return ResponseEntity.ok(service.calcularTotalMensal(id));
+        return ResponseEntity.ok(contratoService.calcularTotalMensal(id));
     }
 }

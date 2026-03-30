@@ -5,8 +5,9 @@ import java.time.LocalDate;
 
 public record ContratoResponse(
         Long id,
-        Long casaId,
-        String numeroCasa,
+        Long unidadeId,
+        String nomeUnidade,
+        String nomeImovel,
         Long inquilinoId,
         String nomeInquilino,
         BigDecimal valorAluguel,

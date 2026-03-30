@@ -9,17 +9,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ContratoRepository extends JpaRepository<Contrato, Long> {
-    List<Contrato> findByCasaId(Long casaId);
-
-    // ✅ Busca contrato ativo da casa (regra: só 1 ativo por casa)
-    Optional<Contrato> findByCasaIdAndAtivoTrue(Long casaId);
-
-    boolean existsByCasaIdAndAtivoTrue(Long casaId);
+    List<Contrato> findByUnidadeIdAndAtivoTrue(Long unidadeId);
+    boolean existsByUnidadeIdAndAtivoTrue(Long unidadeId);
     boolean existsByInquilinoIdAndAtivoTrue(Long inquilinoId);
-
     long countByAtivoTrue();
 
-    // ✅ Soma todos os aluguéis de contratos ativos para o dashboard
     @Query("SELECT COALESCE(SUM(c.valorAluguel), 0) FROM Contrato c WHERE c.ativo = true")
     BigDecimal somarValorAluguelAtivos();
 }

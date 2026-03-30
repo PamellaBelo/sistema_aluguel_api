@@ -7,9 +7,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record ContratoRequest(
-        @NotNull Long casaId,
+        @NotNull Long unidadeId,
         @NotNull Long inquilinoId,
-        @NotNull @Positive BigDecimal valorAluguel,
+        @Positive BigDecimal valorAluguel,
         @NotNull LocalDate dataInicio,
-        LocalDate dataFim
+        @NotNull LocalDate dataFim
 ) {}
