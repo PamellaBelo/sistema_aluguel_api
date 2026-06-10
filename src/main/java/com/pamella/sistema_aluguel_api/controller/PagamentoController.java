@@ -46,4 +46,8 @@ public class PagamentoController {
         service.deletar(id);
         return ResponseEntity.noContent().build();
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<PagamentoResponse> editar(@PathVariable Long id, @RequestBody @Valid PagamentoRequest request) {
+        return ResponseEntity.ok(service.editar(id, request));
+    }
 }

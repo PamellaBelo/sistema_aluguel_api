@@ -42,4 +42,8 @@ public class ContratoController {
     public ResponseEntity<BigDecimal> totalMensal(@PathVariable Long id) {
         return ResponseEntity.ok(contratoService.calcularTotalMensal(id));
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<ContratoResponse> editar(@PathVariable Long id, @RequestBody @Valid ContratoRequest request) {
+        return ResponseEntity.ok(contratoService.editar(id, request));
+    }
 }

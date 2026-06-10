@@ -48,6 +48,23 @@ public class ContratoService {
         return toResponse(contratoRepository.save(contrato));
     }
 
+    public ContratoResponse editar(Long id, ContratoRequest request) {
+        Contrato contrato = contratoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Contrato não encontrado."));
+        Unidade unidade = unidadeRepository.findById(request.unidadeId())
+                .orElseThrow(() -> new EntityNotFoundException("Unidade não encontrada."));
+        Inquilino inquilino = inquilinoRepository.findById(request.inquilinoId())
+                .orElseThrow(() -> new EntityNotFoundException("Inquilino não encontrado."));
+
+        contrato.setUnidade(unidade);
+        contrato.setInquilino(inquilino);
+        contrato.setValorAluguel(request.valorAluguel());
+        contrato.setDataInicio(request.dataInicio());
+        contrato.setDataFim(request.dataFim());
+
+        return toResponse(contratoRepository.save(contrato));
+    }
+
     public List<ContratoResponse> listar() {
         return contratoRepository.findAll().stream().map(this::toResponse).toList();
     }

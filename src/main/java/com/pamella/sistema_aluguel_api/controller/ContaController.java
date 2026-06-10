@@ -38,4 +38,9 @@ public class ContaController {
         service.deletar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ContaResponse> editar(@PathVariable Long id, @RequestBody @Valid ContaRequest request) {
+        return ResponseEntity.ok(service.editar(id, request));
+    }
 }

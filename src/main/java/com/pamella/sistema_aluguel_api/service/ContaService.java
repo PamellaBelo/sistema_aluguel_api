@@ -39,6 +39,14 @@ public class ContaService {
         contaRepository.save(conta);
         return toResponse(conta);
     }
+    public ContaResponse editar(Long id, ContaRequest request) {
+        Conta conta = contaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Conta não encontrada."));
+        conta.setTipo(request.tipo());
+        conta.setValor(request.valor());
+        conta.setVencimento(request.vencimento());
+        return toResponse(contaRepository.save(conta));
+    }
 
     public List<ContaResponse> listarPorContrato(Long contratoId) {
         return contaRepository.findByContratoId(contratoId)

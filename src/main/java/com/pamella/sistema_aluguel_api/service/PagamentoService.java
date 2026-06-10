@@ -19,6 +19,7 @@ public class PagamentoService {
     private final ContratoRepository contratoRepository;
     private final ContaRepository contaRepository;
 
+
     public PagamentoResponse registrar(PagamentoRequest request) {
         Contrato contrato = contratoRepository.findById(request.contratoId())
                 .orElseThrow(() -> new EntityNotFoundException("Contrato não encontrado."));
@@ -48,6 +49,26 @@ public class PagamentoService {
                 .valorPago(valorTotal)
                 .status(status)
                 .build();
+
+        return toResponse(pagamentoRepository.save(pagamento));
+    }
+
+    public PagamentoResponse editar(Long id, PagamentoRequest request) {
+        Pagamento pagamento = pagamentoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Pagamento não encontrado."));
+
+        BigDecimal totalContas = contaRepository.findByContratoId(pagamento.getContrato().getId())
+                .stream().map(c -> c.getValor()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal valorTotal = pagamento.getContrato().getValorAluguel().add(totalContas);
+
+        StatusPagamento status = request.dataPagamento().getDayOfMonth() <= 10
+                ? StatusPagamento.PAGO
+                : StatusPagamento.ATRASADO;
+
+        pagamento.setDataPagamento(request.dataPagamento());
+        pagamento.setMesReferencia(request.mesReferencia());
+        pagamento.setValorPago(valorTotal);
+        pagamento.setStatus(status);
 
         return toResponse(pagamentoRepository.save(pagamento));
     }
